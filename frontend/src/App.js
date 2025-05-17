@@ -9,6 +9,7 @@ import CountryChart from './features/CountryChart';
 import AthleteTable from './features/AthleteTable';
 import WinConversionChart from './features/WinConversionChart';
 import NextStepsTable from './features/NextStepTable';
+import WorldMapMedals from './features/WorldMapMedals';
 
 function App() {
   return (
@@ -18,17 +19,21 @@ function App() {
         <Header />
         <main className="p-6 space-y-6">
           <SummaryCards />
-          
-          
+
+
           {/* Athlete Count by Countries */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Left: Athlete Count Bar Chart */}
             <div className="bg-white p-4 rounded shadow h-full">
               <CountryChart />
             </div>
-            <div className="bg-white p-4 rounded shadow h-full">
-              <WinConversionChart />
+
+            {/* Right: Medal Map */}
+            <div className="bg-white p-4 rounded shadow h-full overflow-auto">
+              <WorldMapMedals />
             </div>
           </div>
+
 
           {/* List of Athletes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

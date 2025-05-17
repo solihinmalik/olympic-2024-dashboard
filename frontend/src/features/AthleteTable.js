@@ -32,7 +32,7 @@ const AthleteTable = () => {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-700 mb-3">Athletes</h2>
+      <h2 className="text-lg font-semibold text-gray-700 mb-3">Athletes Information</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto border border-gray-300">
           <thead className="bg-gray-800 text-white">

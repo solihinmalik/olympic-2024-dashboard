@@ -9,12 +9,22 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 
+// Read Medals CSV
+const medals = [];
+
+fs.createReadStream(path.join(__dirname, 'dataset/medals.csv'))
+  .pipe(csv())
+  .on('data', (row) => medals.push(row))
+  .on('end', () => {
+    console.log(`✅ Loaded ${medals.length} medal records`);
+  });
+
 
 // Middleware to parse JSON requests
 let athletes = [];
 let dataLoaded = false;
 
-// Read CSV
+// Read Athlete CSV
 fs.createReadStream(path.join(__dirname, 'dataset/athletes.csv'))
   .pipe(csv())
   .on('data', (row) => athletes.push(row))
@@ -58,6 +68,30 @@ app.get('/api/athletes/count-by-country', (req, res) => {
 
   res.json(sorted);
 });
+
+  // Medals by Country API Route
+  app.get('/api/medals/by-country', (req, res) => {
+  const medalMap = {};
+
+  medals.forEach(({ country, medal_type }) => {
+    if (!country) return;
+
+    if (!medalMap[country]) {
+      medalMap[country] = { country, gold: 0, silver: 0, bronze: 0, total: 0 };
+    }
+
+    if (medal_type === 'Gold Medal') medalMap[country].gold++;
+    else if (medal_type === 'Silver Medal') medalMap[country].silver++;
+    else if (medal_type === 'Bronze Medal') medalMap[country].bronze++;
+
+    medalMap[country].total++;
+  });
+
+  const result = Object.values(medalMap);
+  res.json(result);
+});
+
+
 
 // Start the server
 app.listen(PORT, () => {
