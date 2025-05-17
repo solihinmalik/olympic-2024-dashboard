@@ -30,11 +30,16 @@ function App() {
             </div>
           </div>
 
-          <div className="text-red-500 text-xl font-bold">Hello Tailwind!</div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AthleteTable />
-            <NextStepsTable />
+          {/* List of Athletes */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <div className="bg-white p-4 rounded shadow">
+              <AthleteTable />
+            </div>
+            <div className="bg-white p-4 rounded shadow">
+              <NextStepsTable />
+            </div>
           </div>
+
         </main>
       </div>
     </div>

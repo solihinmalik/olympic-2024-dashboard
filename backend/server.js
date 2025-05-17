@@ -46,7 +46,7 @@ app.get('/api/athletes/count-by-country', (req, res) => {
   const countryCount = {};
 
   athletes.forEach(athlete => {
-    const country = athlete.nationality || athlete.Country || 'Unknown';
+    const country = athlete.country || 'Unknown';
     countryCount[country] = (countryCount[country] || 0) + 1;
   });
 
