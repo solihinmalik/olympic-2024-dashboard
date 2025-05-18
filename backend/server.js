@@ -226,50 +226,50 @@ app.get('/api/athletes/medallists', (req, res) => {
   res.json(enriched);
 });
 
-// First implementation of /api/athletes/by-country
-app.get('/api/athletes/by-country', (req, res) => {
-  const results = {};
-  let rowCount = 0;
+// // First implementation of /api/athletes/by-country
+// app.get('/api/athletes/by-country', (req, res) => {
+//   const results = {};
+//   let rowCount = 0;
 
-  fs.createReadStream(path.join(__dirname, 'dataset/athletes_clean.csv'))
-    .pipe(csv())
-    .on('data', (row) => {
-      rowCount++;
-      const name = row.country?.trim();
-      const code = countryNameToISO[name];
-      if (row.function === 'Athlete' && code) {
-        results[code] = (results[code] || 0) + 1;
-      }
-    })
-    .on('end', () => {
-      console.log(`🔍 Parsed ${rowCount} rows from athletes_clean.csv`);
-      console.log('✅ Top 10 countries:', Object.entries(results).slice(0, 10));
-      const response = Object.entries(results).map(([code, count]) => ({ code, count }));
-      res.json(response);
-    })
-    .on('error', (err) => {
-      console.error('❌ Error reading athletes_clean.csv:', err);
-      res.status(500).json({ error: 'Failed to process CSV' });
-    });
-});
+//   fs.createReadStream(path.join(__dirname, 'dataset/athletes_clean.csv'))
+//     .pipe(csv())
+//     .on('data', (row) => {
+//       rowCount++;
+//       const name = row.country?.trim();
+//       const code = countryNameToISO[name];
+//       if (row.function === 'Athlete' && code) {
+//         results[code] = (results[code] || 0) + 1;
+//       }
+//     })
+//     .on('end', () => {
+//       console.log(`🔍 Parsed ${rowCount} rows from athletes_clean.csv`);
+//       console.log('✅ Top 10 countries:', Object.entries(results).slice(0, 10));
+//       const response = Object.entries(results).map(([code, count]) => ({ code, count }));
+//       res.json(response);
+//     })
+//     .on('error', (err) => {
+//       console.error('❌ Error reading athletes_clean.csv:', err);
+//       res.status(500).json({ error: 'Failed to process CSV' });
+//     });
+// });
 
-// Second implementation of /api/athletes/by-country
-app.get('/api/athletes/by-country', (req, res) => {
-  const results = {};
-  fs.createReadStream(path.join(__dirname, 'dataset/athletes_clean.csv'))
-    .pipe(csv())
-    .on('data', (row) => {
-      const name = row.country?.trim();
-      const code = countryNameToISO[name];
-      if (row.function === 'Athlete' && code) {
-        results[code] = (results[code] || 0) + 1;
-      }
-    })
-    .on('end', () => {
-      const response = Object.entries(results).map(([code, count]) => ({ code, count }));
-      res.json(response);
-    });
-});
+// // Second implementation of /api/athletes/by-country
+// app.get('/api/athletes/by-country', (req, res) => {
+//   const results = {};
+//   fs.createReadStream(path.join(__dirname, 'dataset/athletes_clean.csv'))
+//     .pipe(csv())
+//     .on('data', (row) => {
+//       const name = row.country?.trim();
+//       const code = countryNameToISO[name];
+//       if (row.function === 'Athlete' && code) {
+//         results[code] = (results[code] || 0) + 1;
+//       }
+//     })
+//     .on('end', () => {
+//       const response = Object.entries(results).map(([code, count]) => ({ code, count }));
+//       res.json(response);
+//     });
+// });
 
 // Third implementation of /api/athletes/by-country
 app.get('/api/athletes/by-country', (req, res) => {
