@@ -109,7 +109,6 @@ app.get('/api/sports/dashboard', (req, res) => {
   }
   
   // Process data for the selected sport
-  
   // 1. Top 10 countries in this sport
   const sportMedals = medals.filter(medal => medal.discipline === sport);
   const countryMedals = {};
@@ -145,13 +144,13 @@ app.get('/api/sports/dashboard', (req, res) => {
   // Get the country codes of top 10 countries for filtering
   const topCountryCodes = topCountries.map(c => c.countryCode);
   
-    // 2. World map data - CHANGE THIS SECTION
+    // 2. World map data 
     const worldMapData = Object.values(countryMedals).map(country => ({
       countryCode: country.countryCode,
       country: country.country,
-      gold: country.gold,      // Add this - include medal breakdowns
-      silver: country.silver,  // Add this
-      bronze: country.bronze,  // Add this
+      gold: country.gold,      
+      silver: country.silver,  
+      bronze: country.bronze,  
       total: country.total
     }));
   
@@ -217,14 +216,14 @@ app.get('/api/sports/dashboard', (req, res) => {
 // Modify the relatedSports section of your server.js code:
 
   // 4. Cross-sport correlation
-  const top3CountryCodes = topCountryCodes.slice(0, 3);
+  const top10CountryCodes = topCountryCodes.slice(0, 10);
 
-  // Find medals won by top 3 countries in other sports
+  // Find medals won by top 10 countries in other sports
   const sportCounts = {};
 
   medals.forEach(medal => {
     if (medal.discipline === sport) return; // Skip the current sport
-    if (!top3CountryCodes.includes(medal.country_code)) return; // Skip countries not in top 3
+    if (!top10CountryCodes.includes(medal.country_code)) return; 
     
     const discipline = medal.discipline;
     
