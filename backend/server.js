@@ -328,6 +328,32 @@ app.get('/api/athletes/by-country', (req, res) => {
 });
 
 
+//A API Endpoints #3 : Total Medals by Country
+// Endpoint to return medals by country
+app.get('/api/medals/totals-by-country', (req, res) => {
+  const medals = [];
+
+  fs.createReadStream(path.join(__dirname, 'dataset/medals_total.csv'))
+    .pipe(csv())
+    .on('data', (row) => {
+      const code = row.country_code?.trim().toUpperCase();
+      const total = parseInt(row.Total || row.total_medals || 0, 10);
+      if (code && total) {
+        medals.push({
+          country_code: code,
+          "Gold Medal": parseInt(row["Gold Medal"] || 0, 10),
+          "Silver Medal": parseInt(row["Silver Medal"] || 0, 10),
+          "Bronze Medal": parseInt(row["Bronze Medal"] || 0, 10),
+          Total: total
+        });
+      }
+    })
+    .on('end', () => {
+      res.json(medals);
+    });
+});
+
+
 // Root Route (Athlete Data)
 app.get('/', (req, res) => {
   res.send('Welcome to the Olympics 2024 Dashboard API');
