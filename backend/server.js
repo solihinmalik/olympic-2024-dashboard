@@ -227,6 +227,39 @@ let medalsLoaded = false;
 let athletesLoaded = false;
 
 fs.createReadStream(path.join(__dirname, 'dataset/athletes_clean.csv'))
+fs.createReadStream(path.join(__dirname, 'dataset/medals.csv'))
+  .pipe(csv())
+  .on('data', (row) => medals.push(row))
+  .on('end', () => {
+    console.log(`✅ Loaded ${medals.length} medal records`);
+  });
+
+// Read Medallists CSV
+let medallists = [];
+let medallistsLoaded = false;
+
+fs.createReadStream(path.join(__dirname, 'dataset/medallists.csv'))
+  .pipe(csv())
+  .on('data', (row) => medallists.push(row))
+  .on('end', () => {
+    medallistsLoaded = true;
+    console.log(`✅ Loaded ${medallists.length} medallist records`);
+  });
+
+// Update middleware to check for medallists data
+app.use((req, res, next) => {
+  if (!dataLoaded || !medallistsLoaded) {
+    return res.status(503).json({ message: 'Data loading, please try again shortly.' });
+  }
+  next();
+});
+
+// Middleware to parse JSON requests
+let athletes = [];
+let dataLoaded = false;
+
+// Read Athlete CSV
+fs.createReadStream(path.join(__dirname, 'dataset/athletes.csv'))
   .pipe(csv())
   .on('data', (row) => athletes.push(row))
   .on('end', () => {
@@ -383,191 +416,123 @@ app.get('/api/athletes/count-by-country', (req, res) => {
   res.json(sorted);
 });
 
-  // Medals by Country API Route
-  app.get('/api/medals/by-country', (req, res) => {
+// ====================================================================================================================
+// MEDAL TRACKER DASHBOARD  
+// Medal Data API Route
+app.get('/api/medals', (req, res) => {
+  // 1. By Country aggregation
   const medalMap = {};
+  // 2. By Discipline-Country aggregation
+  const breakdown = {};
+  // 3. Timeline data
+  const timeline = {};
 
-  medals.forEach(({ country, medal_type }) => {
+  medals.forEach((row) => {
+    const { country, discipline, medal_type, medal_date } = row;
     if (!country) return;
 
+    // 1. By Country aggregation
     if (!medalMap[country]) {
       medalMap[country] = { country, gold: 0, silver: 0, bronze: 0, total: 0 };
     }
-
     if (medal_type === 'Gold Medal') medalMap[country].gold++;
     else if (medal_type === 'Silver Medal') medalMap[country].silver++;
     else if (medal_type === 'Bronze Medal') medalMap[country].bronze++;
-
     medalMap[country].total++;
+
+    // 2. By Discipline-Country aggregation
+    if (discipline) {
+      const key = `${country}||${discipline}`;
+      if (!breakdown[key]) {
+        breakdown[key] = { country, discipline, gold: 0, silver: 0, bronze: 0, total: 0 };
+      }
+      if (medal_type === 'Gold Medal') breakdown[key].gold++;
+      else if (medal_type === 'Silver Medal') breakdown[key].silver++;
+      else if (medal_type === 'Bronze Medal') breakdown[key].bronze++;
+      breakdown[key].total++;
+    }
+
+    // 3. Timeline data (by country, discipline, date, and medal type)
+    if (discipline && medal_date && medal_type) {
+      if (!timeline[country]) timeline[country] = {};
+      if (!timeline[country][discipline]) timeline[country][discipline] = {};
+      if (!timeline[country][discipline][medal_date]) {
+        timeline[country][discipline][medal_date] = { gold: 0, silver: 0, bronze: 0 };
+      }
+      if (medal_type === 'Gold Medal') timeline[country][discipline][medal_date].gold++;
+      else if (medal_type === 'Silver Medal') timeline[country][discipline][medal_date].silver++;
+      else if (medal_type === 'Bronze Medal') timeline[country][discipline][medal_date].bronze++;
+    }
   });
 
-  const result = Object.values(medalMap);
-  res.json(result);
+  // Process timeline data into cumulative format
+  const processedTimeline = {};
+  Object.entries(timeline).forEach(([country, disciplineObj]) => {
+    processedTimeline[country] = {};
+    Object.entries(disciplineObj).forEach(([discipline, dateCounts]) => {
+      const dates = Object.keys(dateCounts).sort();
+      let cumulativeGold = 0, cumulativeSilver = 0, cumulativeBronze = 0;
+      processedTimeline[country][discipline] = dates.map(date => {
+        cumulativeGold += dateCounts[date].gold;
+        cumulativeSilver += dateCounts[date].silver;
+        cumulativeBronze += dateCounts[date].bronze;
+        return {
+          date,
+          cumulative: cumulativeGold + cumulativeSilver + cumulativeBronze,
+          gold: cumulativeGold,
+          silver: cumulativeSilver,
+          bronze: cumulativeBronze,
+          discipline
+        };
+      });
+    });
+  });
+
+  // Build timelineByMedalType: cumulative by date, summed across all disciplines (no discipline split)
+  const timelineByMedalType = {};
+  Object.entries(timeline).forEach(([country, disciplineObj]) => {
+    // Gather all unique dates for this country
+    const allDatesSet = new Set();
+    Object.values(disciplineObj).forEach(dateCounts => {
+      Object.keys(dateCounts).forEach(date => allDatesSet.add(date));
+    });
+    const allDates = Array.from(allDatesSet).sort();
+
+    let cumulativeGold = 0, cumulativeSilver = 0, cumulativeBronze = 0;
+    timelineByMedalType[country] = allDates.map(date => {
+      let goldThisDate = 0, silverThisDate = 0, bronzeThisDate = 0;
+      Object.values(disciplineObj).forEach(dateCounts => {
+        if (dateCounts[date]) {
+          goldThisDate += dateCounts[date].gold;
+          silverThisDate += dateCounts[date].silver;
+          bronzeThisDate += dateCounts[date].bronze;
+        }
+      });
+      cumulativeGold += goldThisDate;
+      cumulativeSilver += silverThisDate;
+      cumulativeBronze += bronzeThisDate;
+      return {
+        date,
+        gold: cumulativeGold,
+        silver: cumulativeSilver,
+        bronze: cumulativeBronze,
+        total: cumulativeGold + cumulativeSilver + cumulativeBronze
+      };
+    });
+  });
+
+  res.json({
+    byCountry: Object.values(medalMap),
+    byDisciplineCountry: Object.values(breakdown),
+    timeline: processedTimeline,
+    timelineByMedalType,
+    medals
+  });
 });
 
-// ######################################################Sport Dashboard Code######################################################
-app.get('/api/sports/dashboard', (req, res) => {
-  const sport = req.query.sport;
-  
-  if (!sport) {
-    // If no sport is specified, return the list of available sports
-    const sportSet = new Set();
-    medals.forEach(medal => {
-      if (medal.discipline) {
-        sportSet.add(medal.discipline);
-      }
-    });
-    return res.json({ 
-      sports: Array.from(sportSet).sort() 
-    });
-  }
-  
-  // Process data for the selected sport
-  // 1. Top 10 countries in this sport
-  const sportMedals = medals.filter(medal => medal.discipline === sport);
-  const countryMedals = {};
-  
-  sportMedals.forEach(medal => {
-    const country = medal.country;
-    const medalType = medal.medal_type;
-    
-    if (!country) return;
-    
-    if (!countryMedals[country]) {
-      countryMedals[country] = { 
-        country, 
-        countryCode: medal.country_code, 
-        gold: 0, 
-        silver: 0, 
-        bronze: 0, 
-        total: 0 
-      };
-    }
-    
-    if (medalType === 'Gold Medal') countryMedals[country].gold++;
-    else if (medalType === 'Silver Medal') countryMedals[country].silver++;
-    else if (medalType === 'Bronze Medal') countryMedals[country].bronze++;
-    
-    countryMedals[country].total++;
-  });
-  
-  const topCountries = Object.values(countryMedals)
-    .sort((a, b) => b.total - a.total || b.gold - a.gold)
-    .slice(0, 10);
-  
-  // Get the country codes of top 10 countries for filtering
-  const topCountryCodes = topCountries.map(c => c.countryCode);
-  
-    // 2. World map data 
-    const worldMapData = Object.values(countryMedals).map(country => ({
-      countryCode: country.countryCode,
-      country: country.country,
-      gold: country.gold,      
-      silver: country.silver,  
-      bronze: country.bronze,  
-      total: country.total
-    }));
-  
-  // 3. Athlete demographics (simplified to age and gender only for top countries)
-  // Helper for age calculation
-  const calculateAge = (birthDateString) => {
-    if (!birthDateString) return null;
-    const birthDate = new Date(birthDateString);
-    if (isNaN(birthDate.getTime())) return null;
-    
-    const olympicDate = new Date(2024, 7, 1);
-    let age = olympicDate.getFullYear() - birthDate.getFullYear();
-    if (olympicDate.getMonth() < birthDate.getMonth() || 
-        (olympicDate.getMonth() === birthDate.getMonth() && olympicDate.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-  
-  // Helper for disciplines parsing
-  const parseAthletesDisciplines = (str) => {
-    if (!str) return [];
-    try {
-      return str.replace(/[\[\]']/g, '').split(',').map(d => d.trim());
-    } catch (e) {
-      return [];
-    }
-  };
-  
-  // Filter athletes by sport and top countries
-  const sportAthletes = athletes.filter(athlete => {
-    const disciplines = parseAthletesDisciplines(athlete.disciplines);
-    return disciplines.some(d => d === sport) && 
-           topCountryCodes.includes(athlete.country_code);
-  });
-  
-  //demographics
-  const genderDistribution = { Male: 0, Female: 0 };
-  const ageGroups = { 
-    "Under 20": 0, 
-    "20-24": 0, 
-    "25-29": 0, 
-    "30-34": 0, 
-    "35+": 0 
-  };
-    
-  sportAthletes.forEach(athlete => {
-    // Gender count
-    if (athlete.gender === 'Male') genderDistribution.Male++;
-    else if (athlete.gender === 'Female') genderDistribution.Female++;
-    
-    // Age count with more groups
-    const age = calculateAge(athlete.birth_date);
-    if (age) {
-      if (age < 20) ageGroups["Under 20"]++;
-      else if (age < 25) ageGroups["20-24"]++;
-      else if (age < 30) ageGroups["25-29"]++;
-      else if (age < 35) ageGroups["30-34"]++;
-      else ageGroups["35+"]++;
-    }
-  });
-  
-// Modify the relatedSports section of your server.js code:
-
-  // 4. Cross-sport correlation
-  const top10CountryCodes = topCountryCodes.slice(0, 10);
-
-  // Find medals won by top 10 countries in other sports
-  const sportCounts = {};
-
-  medals.forEach(medal => {
-    if (medal.discipline === sport) return; // Skip the current sport
-    if (!top10CountryCodes.includes(medal.country_code)) return; 
-    
-    const discipline = medal.discipline;
-    
-    // Initialize sport data if not exists
-    if (!sportCounts[discipline]) {
-      sportCounts[discipline] = 0;
-    }
-    
-    // Add to total medal count
-    sportCounts[discipline]++;
-  });
-
-  // Convert to array, sort and take top 5
-  const relatedSports = Object.entries(sportCounts)
-    .map(([sport, medals]) => ({ sport, medals }))
-    .sort((a, b) => b.medals - a.medals)
-    .slice(0, 5);
-
-  // Send all the data in one response
-  res.json({
-    sport,
-    topCountries,
-    worldMapData,
-    athleteDemographics: {
-      total: sportAthletes.length,
-      genderDistribution,
-      ageGroups
-    },
-    relatedSports
-  });
+// MEDAL LISTS API ROUTE
+app.get('/api/medallists', (req, res) => {
+  res.json(medallists);
 });
 
 // Start the server
