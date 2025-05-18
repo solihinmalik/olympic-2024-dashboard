@@ -64,7 +64,8 @@ export default function SummaryCards({ selectedCountry }) {
         const totalMedallists = medallistsData.length;
         const totalAthletes = athletesData.length;
         // Calculate unique events from medallistsData
-        const uniqueEvents = new Set(medallistsData.map(d => d.event).filter(Boolean));
+        // const uniqueEvents = new Set(medallistsData.map(d => d.event).filter(Boolean));
+        const uniqueEvents = new Set(medalsData.medals.map(d => d.event).filter(Boolean));
         const totalEvents = uniqueEvents.size;
 
         setStats({
