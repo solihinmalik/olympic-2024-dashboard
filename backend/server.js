@@ -330,9 +330,7 @@ app.get('/api/athletes/by-country', (req, res) => {
     });
 });
 
-
 //A API Endpoints #3 : Total Medals by Country
-// Endpoint to return medals by country
 app.get('/api/medals/totals-by-country', (req, res) => {
   const medals = [];
 
