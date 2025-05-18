@@ -1,5 +1,5 @@
 // src/App.js
-import React from 'react';
+import React, { useState } from 'react';
 import './index.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -17,11 +17,18 @@ import MedalsDashboard from './dashboards/MedalsDashboard';
 import SportsDashboard from './dashboards/SportsDashboard';
 
 function App() {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <Router>
       <div className="flex min-h-screen bg-gray-100">
-        <Sidebar />
-        <div className="flex flex-col flex-1">
+        {/* ✅ Pass onToggle prop to Sidebar */}
+        <Sidebar onToggle={setIsSidebarCollapsed} />
+        <div
+          className={`flex flex-col flex-1 transition-all duration-300 ${
+            isSidebarCollapsed ? 'ml-16' : 'ml-64'
+          }`}
+        >
           <Header />
           <main className="p-6 space-y-6">
             <Routes>
