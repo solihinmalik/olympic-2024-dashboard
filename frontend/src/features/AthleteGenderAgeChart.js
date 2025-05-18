@@ -12,7 +12,12 @@ export default function AthleteGenderAgeChart() {
 
     useEffect(() => {
         fetch('/api/athletes/top-medallists')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return res.json();
+            })
             .then(athletes => {
                 console.log("✅ Fetched Data:", athletes);
                 const buckets = {

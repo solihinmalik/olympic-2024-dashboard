@@ -16,20 +16,34 @@ export default function CountryChart() {
   const [countryData, setCountryData] = useState([]);
   const [medalTotals, setMedalTotals] = useState([]);
   const [selectedCode, setSelectedCode] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/athletes/by-country')
-      .then(res => {
-        const sorted = res.data.sort((a, b) => b.count - a.count);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [countryRes, medalRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/athletes/by-country'),
+          axios.get('http://localhost:5000/api/medals/totals-by-country')
+        ]);
+        
+        const sorted = countryRes.data.sort((a, b) => b.count - a.count);
         setCountryData(sorted);
-      })
-      .catch(err => console.error(err));
+        setMedalTotals(medalRes.data);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    axios.get('http://localhost:5000/api/medals/totals-by-country')
-      .then(res => setMedalTotals(res.data))
-      .catch(err => console.error(err));
+    fetchData();
   }, []);
 
+  if (loading) return <div className="text-center py-6">Loading data...</div>;
+  if (error) return <div className="text-center py-6 text-red-500">{error}</div>;
   const getWinRate = (code) => {
     const total = countryData.find(c => c.code === code)?.count || 0;
     const medals = medalTotals.find(m => m.country_code === code)?.Total || 0;

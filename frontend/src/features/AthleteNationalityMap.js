@@ -7,15 +7,25 @@ const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 const WorldMapWithAthletes = () => {
   const [athleteData, setAthleteData] = useState([]);
   const [hoveredCountry, setHoveredCountry] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    setLoading(true);
     axios.get('http://localhost:5000/api/athletes/by-country')
       .then((res) => {
         console.log("✅ Athlete data:", res.data);
         setAthleteData(res.data);
       })
-      .catch((err) => console.error("❌ Athlete data fetch failed:", err));
+      .catch((err) => {
+        console.error("❌ Athlete data fetch failed:", err);
+        setError("Failed to load athlete data");
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) return <div className="text-center py-6">Loading athlete data...</div>;
+  if (error) return <div className="text-center py-6 text-red-500">{error}</div>;
 
   const getCountryInfo = (iso3) =>
     athleteData.find(entry => entry.code === iso3);

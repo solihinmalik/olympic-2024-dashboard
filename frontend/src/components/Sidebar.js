@@ -15,10 +15,11 @@ export default function Sidebar({ onToggle }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const navItems = [
-    { label: 'Athletes Analysis', path: '/athletes', icon: <Users size={20} /> },
-    { label: 'Medals Analysis', path: '/medals', icon: <Medal size={20} /> },
-    { label: 'Sports Analysis', path: '/sports', icon: <Dribbble size={20} /> },
-  ];
+    { label: 'Landing Page', path: '/', icon: <Home size={20} /> },
+    { label: 'Athletes Analysis', path: '/dashboard/athletes', icon: <Users size={20} /> },
+    { label: 'Medals Analysis', path: '/dashboard/medals', icon: <Medal size={20} /> },
+    { label: 'Sports Analysis', path: '/dashboard/sports', icon: <Dribbble size={20} /> },
+];
 
   const handleToggle = () => {
     setCollapsed(!collapsed);

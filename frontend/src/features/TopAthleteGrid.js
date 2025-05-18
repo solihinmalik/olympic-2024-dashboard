@@ -27,7 +27,11 @@ export default function TopAthletesGrid() {
   const getFlagEmoji = (countryName) => {
     const code = {
       'australia': 'AU', 'belgium': 'BE', 'canada': 'CA', 'france': 'FR', 'italy': 'IT',
-      'japan': 'JP', 'korea': 'KR', 'united states': 'US', 'usa': 'US', 'germany': 'DE'
+      'japan': 'JP', 'korea': 'KR', 'united states': 'US', 'usa': 'US', 'germany': 'DE',
+      'china': 'CN', 'great britain': 'GB', 'spain': 'ES', 'netherlands': 'NL', 
+      'brazil': 'BR', 'india': 'IN', 'russia': 'RU', 'switzerland': 'CH',
+      'sweden': 'SE', 'norway': 'NO', 'denmark': 'DK', 'finland': 'FI',
+      'poland': 'PL', 'austria': 'AT', 'new zealand': 'NZ'
     }[countryName.toLowerCase()] || '';
     return code
       ? String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt()))
