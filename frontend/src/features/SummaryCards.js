@@ -31,7 +31,7 @@ export default function SummaryCards({ selectedCountry }) {
       try {
         const [medalsRes, medallistsRes, athletesRes] = await Promise.all([
           axios.get('http://localhost:5000/api/medals'),
-          axios.get('http://localhost:5000/api/medallists'),
+          axios.get('http://localhost:5000/api/athletes/medallists'),
           axios.get('http://localhost:5000/api/athletes')
         ]);
 
