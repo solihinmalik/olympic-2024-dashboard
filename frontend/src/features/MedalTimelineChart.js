@@ -131,7 +131,7 @@ export default function MedalTimelineChart({ data, selectedCountry }) {
       <h2 className="text-lg font-semibold text-gray-700 mb-2">
         {selectedCountry ? `${selectedCountry} Medal Timeline` : 'Medal Timeline by Country'}
       </h2>
-      <div style={{ height: '80vh' }}>
+      <div style={{ height: '90vh' }}>
         <Line data={chartData} options={{ ...options, maintainAspectRatio: false }} />
       </div>
     </div>
